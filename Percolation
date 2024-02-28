@@ -1,0 +1,140 @@
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.WeightedQuickUnionUF;
+
+/* this code creates implements the conversion, open, isOpen, isFull,
+ numberOfOpenSites and percolates using an n*n grid to be used in the
+ InteractivePercolationVisualizer and PercolationVisualizer
+ */
+public class Percolation {
+
+    private int n; // how big the grid is in the form of n*n
+    private boolean[][] grid; // represents grid that is worked on
+    private int numOpen; // // counter for how many sites are opened
+    // WeightedQuickUnionUF object that allows union() and find() function
+    private WeightedQuickUnionUF weightedQuickUnionUF;
+
+
+    // creates n-by-n grid, with all sites initially blocked
+    public Percolation(int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("Outside of range"); // if out of grid
+        }
+
+        // initializing instance variables
+        grid = new boolean[n][n];
+        this.n = n;
+        numOpen = 0;
+        // "+ 2" to account for virtual top and bottom
+        weightedQuickUnionUF = new WeightedQuickUnionUF(n * n + 2); //
+    }
+
+    // this method converts the site from 2D to 1D to make it a single array
+    private int conversion(int row, int col) {
+        int index = row * n + col;
+        return index;
+    }
+
+    // opens the site (row, col) if it is not open already
+    // true = opened
+    // false = closed
+    public void open(int row, int col) {
+        if (row < 0 || row >= n || col < 0 || col >= n) {
+            throw new IllegalArgumentException("Outside of range"); // if out of grid
+        }
+        // if it is already opened there's no need to open it again
+        if (isOpen(row, col)) {
+            return;
+        }
+        grid[row][col] = true; // opens site
+        numOpen++; // increase counter for number of sites opened
+
+        // connects top row of grid to the virtual top
+        if (row == 0) {
+            weightedQuickUnionUF.union(conversion(row, col), n * n);
+        }
+
+        // connects bottom row of grid to the virtual bottom
+        if (row == n - 1) {
+            weightedQuickUnionUF.union(conversion(row, col), n * n + 1);
+
+        }
+
+        // checks the site on top if it is opened and unions it
+        if (row + 1 < n && (grid[row + 1][col])) {
+            weightedQuickUnionUF.union(conversion(row, col), conversion(row + 1, col));
+        }
+        // checks the site on the bottom if it is opened and unions it
+        if (row - 1 >= 0 && (grid[row - 1][col])) {
+            weightedQuickUnionUF.union(conversion(row, col), conversion(row - 1, col));
+        }
+        // checks the site on the right if it is opened and unions it
+        if (col + 1 < n && (grid[row][col + 1])) {
+            weightedQuickUnionUF.union(conversion(row, col), conversion(row, col + 1));
+        }
+        // checks the site on the left if it is opened and unions it
+        if (col - 1 >= 0 && (grid[row][col - 1])) {
+            weightedQuickUnionUF.union(conversion(row, col), conversion(row, col - 1));
+        }
+    }
+
+    // is the site (row, col) open?
+    public boolean isOpen(int row, int col) {
+        if (row < 0 || row >= n || col < 0 || col >= n) {
+            throw new IllegalArgumentException("Outside of range"); // if out of grid
+        }
+        if (grid[row][col])
+            return true;
+        return false;
+    }
+
+    // is the site (row, col) full?
+    public boolean isFull(int row, int col) {
+        if (row < 0 || row >= n || col < 0 || col >= n) {
+            throw new IllegalArgumentException("Outside of range"); // if out of grid
+        }
+
+        /* if the site is opened and if it's leader is the same as the leader
+        of the virtual top
+         */
+        if (isOpen(row, col) && weightedQuickUnionUF.find(conversion(row, col))
+                == weightedQuickUnionUF.find(n * n)) {
+            return true;
+        }
+        return false;
+    }
+
+
+    // returns the number of open sites
+    public int numberOfOpenSites() {
+        return numOpen;
+    }
+
+    // does the system percolate?
+    public boolean percolates() {
+        // if the leader of the virtual top and virtual bottom are the same
+        if (weightedQuickUnionUF.find(n * n) == weightedQuickUnionUF.find(n * n + 1)) {
+            return true;
+        }
+        return false;
+    }
+
+    // unit testing (required)
+    public static void main(String[] args) {
+        Percolation p1 = new Percolation(4); // test percolation with 4x4 grid
+        // percolates
+        p1.open(2, 0);
+        p1.open(2, 1);
+        p1.open(2, 2);
+        p1.open(2, 3);
+
+        p1.open(3, 2); // tests for false isFull
+        // StdOut.println(p1.percolates());
+        StdOut.println(p1.isOpen(3, 0)); // false
+        StdOut.println(p1.isOpen(2, 0)); // true
+        StdOut.println(p1.isFull(2, 2)); // true
+        StdOut.println(p1.isFull(3, 2)); // false
+        StdOut.println(p1.numberOfOpenSites()); // 5
+        StdOut.println(p1.percolates()); // true
+    }
+
+}
