@@ -1,0 +1,71 @@
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.StdStats;
+import edu.princeton.cs.algs4.Stopwatch;
+
+/* This code inputs the size of a grid and the number of trials and outputs the
+mean, standard deviation, confidence low, confidence high, and elapsed time of
+the percolation threshold.
+ */
+
+public class PercolationStats {
+
+    private int trials; // instance variable for the number of trials
+    // array to store the fraction of open sites needed to percolate
+    private double[] fractions;
+
+    // perform independent trials on an n-by-n grid
+    public PercolationStats(int n, int trials) {
+        this.trials = trials;
+        // if input is out of bounds
+        if (n <= 0 || trials <= 0) {
+            throw new IllegalArgumentException("N and trials have to be more than 0");
+        }
+        fractions = new double[trials];
+        // new Percolation object for each trial
+        for (int i = 0; i < trials; i++) {
+            Percolation p1 = new Percolation(n);
+            // keep opening sites until the grid percolates
+            while (!p1.percolates()) {
+                p1.open(StdRandom.uniformInt(n), StdRandom.uniformInt(n));
+            }
+            // store into array
+            fractions[i] = p1.numberOfOpenSites() / ((double) n * n);
+        }
+    }
+
+    // sample mean of percolation threshold
+    public double mean() {
+        return StdStats.mean(fractions);
+    }
+
+    // sample standard deviation of percolation threshold
+    public double stddev() {
+        return StdStats.stddev(fractions);
+    }
+
+    // low endpoint of 95% confidence interval
+    public double confidenceLow() {
+        return mean() - ((1.96 * stddev()) / Math.sqrt(trials));
+    }
+
+    // high endpoint of 95% confidence interval
+    public double confidenceHigh() {
+        return mean() + ((1.96 * stddev()) / Math.sqrt(trials));
+    }
+
+    // test client (see below)
+    public static void main(String[] args) {
+        Stopwatch time = new Stopwatch(); // start time
+        PercolationStats p1 = new PercolationStats(Integer.parseInt(args[0]),
+                                                   Integer.parseInt(args[1]));
+        // Test: java-algs4 PercolationStats 200 100
+        double totalTime = time.elapsedTime(); // end time
+
+        StdOut.printf("mean()           = %.6f\n", p1.mean()); // 0.592373
+        StdOut.printf("stddev()         = %.6f\n", p1.stddev()); // 0.009680
+        StdOut.printf("confidenceLow()  = %.6f\n", p1.confidenceLow()); // 0.590476
+        StdOut.printf("confidenceHigh() = %.6f\n", p1.confidenceHigh()); // 0.594270
+        StdOut.printf("elapsed time     = %.3f\n", totalTime); // 0.151
+    }
+}
